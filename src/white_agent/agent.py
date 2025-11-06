@@ -2,6 +2,7 @@
 
 import uvicorn
 import dotenv
+import os
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.agent_execution import AgentExecutor, RequestContext
@@ -24,8 +25,8 @@ def prepare_white_agent_card(url):
         examples=[],
     )
     card = AgentCard(
-        name="file_agent",
-        description="Test agent from file",
+        name="general_white_agent",
+        description="A general-purpose white agent for task fulfillment.",
         url=url,
         version="1.0.0",
         default_input_modes=["text/plain"],
@@ -52,12 +53,20 @@ class GeneralWhiteAgentExecutor(AgentExecutor):
                 "content": user_input,
             }
         )
-        response = completion(
-            messages=messages,
-            model="openai/gpt-4o",
-            custom_llm_provider="openai",
-            temperature=0.0,
-        )
+        if os.environ.get("LITELLM_PROXY_API_KEY") is not None:
+            response = completion(
+                messages=messages,
+                model="openrouter/openai/gpt-4o",
+                custom_llm_provider="litellm_proxy",
+                temperature=0.0,
+            )
+        else:
+            response = completion(
+                messages=messages,
+                model="openai/gpt-4o",
+                custom_llm_provider="openai",
+                temperature=0.0,
+            )
         next_message = response.choices[0].message.model_dump()  # type: ignore
         messages.append(
             {
@@ -77,8 +86,12 @@ class GeneralWhiteAgentExecutor(AgentExecutor):
 
 def start_white_agent(agent_name="general_white_agent", host="localhost", port=9002):
     print("Starting white agent...")
-    url = f"http://{host}:{port}"
-    card = prepare_white_agent_card(url)
+
+    # # # without controller
+    # url = f"http://{host}:{port}"
+    # card = prepare_white_agent_card(url)
+
+    card = prepare_white_agent_card(os.getenv("AGENT_URL"))
 
     request_handler = DefaultRequestHandler(
         agent_executor=GeneralWhiteAgentExecutor(),

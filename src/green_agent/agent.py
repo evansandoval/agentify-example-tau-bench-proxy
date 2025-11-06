@@ -5,6 +5,7 @@ import tomllib
 import dotenv
 import json
 import time
+import os
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.agent_execution import AgentExecutor, RequestContext
@@ -191,8 +192,12 @@ class TauGreenAgentExecutor(AgentExecutor):
 def start_green_agent(agent_name="tau_green_agent", host="localhost", port=9001):
     print("Starting green agent...")
     agent_card_dict = load_agent_card_toml(agent_name)
-    url = f"http://{host}:{port}"
-    agent_card_dict["url"] = url  # complete all required card fields
+
+    # # without controller
+    # url = f"http://{host}:{port}"
+    # agent_card_dict["url"] = url  # complete all required card fields
+
+    agent_card_dict["url"] = os.getenv("AGENT_URL")
 
     request_handler = DefaultRequestHandler(
         agent_executor=TauGreenAgentExecutor(),
