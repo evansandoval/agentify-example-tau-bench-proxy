@@ -1,8 +1,8 @@
 """White agent implementation - the target agent being tested."""
 
+import os
 import uvicorn
 import dotenv
-import os
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.agent_execution import AgentExecutor, RequestContext
@@ -53,20 +53,12 @@ class GeneralWhiteAgentExecutor(AgentExecutor):
                 "content": user_input,
             }
         )
-        if os.environ.get("LITELLM_PROXY_API_KEY") is not None:
-            response = completion(
-                messages=messages,
-                model="openrouter/openai/gpt-4o",
-                custom_llm_provider="litellm_proxy",
-                temperature=0.0,
-            )
-        else:
-            response = completion(
-                messages=messages,
-                model="openai/gpt-4o",
-                custom_llm_provider="openai",
-                temperature=0.0,
-            )
+        response = completion(
+            messages=messages,
+            model="openai/gpt-4o",
+            custom_llm_provider="openai",
+            temperature=0.0,
+        )
         next_message = response.choices[0].message.model_dump()  # type: ignore
         messages.append(
             {
@@ -86,12 +78,8 @@ class GeneralWhiteAgentExecutor(AgentExecutor):
 
 def start_white_agent(agent_name="general_white_agent", host="localhost", port=9002):
     print("Starting white agent...")
-
-    # # # without controller
-    # url = f"http://{host}:{port}"
-    # card = prepare_white_agent_card(url)
-
-    card = prepare_white_agent_card(os.getenv("AGENT_URL"))
+    agent_url = os.getenv("AGENT_URL") or f"http://{host}:{port}"
+    card = prepare_white_agent_card(agent_url)
 
     request_handler = DefaultRequestHandler(
         agent_executor=GeneralWhiteAgentExecutor(),
@@ -104,3 +92,8 @@ def start_white_agent(agent_name="general_white_agent", host="localhost", port=9
     )
 
     uvicorn.run(app.build(), host=host, port=port)
+
+
+if __name__ == "__main__":
+    port = int(os.getenv("AGENT_PORT", "9002"))
+    start_white_agent(port=port)
