@@ -1,5 +1,6 @@
 """White agent implementation - the target agent being tested."""
 
+import os
 import uvicorn
 import dotenv
 from a2a.server.apps import A2AStarletteApplication
@@ -77,8 +78,8 @@ class GeneralWhiteAgentExecutor(AgentExecutor):
 
 def start_white_agent(agent_name="general_white_agent", host="localhost", port=9002):
     print("Starting white agent...")
-    url = f"http://{host}:{port}"
-    card = prepare_white_agent_card(url)
+    agent_url = os.getenv("AGENT_URL") or f"http://{host}:{port}"
+    card = prepare_white_agent_card(agent_url)
 
     request_handler = DefaultRequestHandler(
         agent_executor=GeneralWhiteAgentExecutor(),
@@ -91,3 +92,8 @@ def start_white_agent(agent_name="general_white_agent", host="localhost", port=9
     )
 
     uvicorn.run(app.build(), host=host, port=port)
+
+
+if __name__ == "__main__":
+    port = int(os.getenv("AGENT_PORT", "9002"))
+    start_white_agent(port=port)

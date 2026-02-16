@@ -1,5 +1,6 @@
 """Green agent implementation - manages assessment and evaluation."""
 
+import os
 import uvicorn
 import tomllib
 import dotenv
@@ -191,8 +192,8 @@ class TauGreenAgentExecutor(AgentExecutor):
 def start_green_agent(agent_name="tau_green_agent", host="localhost", port=9001):
     print("Starting green agent...")
     agent_card_dict = load_agent_card_toml(agent_name)
-    url = f"http://{host}:{port}"
-    agent_card_dict["url"] = url  # complete all required card fields
+    agent_url = os.getenv("AGENT_URL") or f"http://{host}:{port}"
+    agent_card_dict["url"] = agent_url  # complete all required card fields
 
     request_handler = DefaultRequestHandler(
         agent_executor=TauGreenAgentExecutor(),
@@ -205,3 +206,8 @@ def start_green_agent(agent_name="tau_green_agent", host="localhost", port=9001)
     )
 
     uvicorn.run(app.build(), host=host, port=port)
+
+
+if __name__ == "__main__":
+    port = int(os.getenv("AGENT_PORT", "9001"))
+    start_green_agent(port=port)
